@@ -23,7 +23,8 @@ export async function createUser(request, response) {
       user_Id: users.length,
       name,
       email,
-      password: passwordCrypted
+      password: passwordCrypted,
+      favoriteds: []
     });
 
     response.status(201).send('Usuário adicionado');
