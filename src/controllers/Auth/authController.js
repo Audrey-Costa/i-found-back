@@ -31,6 +31,7 @@ export async function createUser(request, response) {
 
     closeClient();
   } catch {
+    //
     response.status(500).send('Erro ao adicionar no banco');
     closeClient();
   }
