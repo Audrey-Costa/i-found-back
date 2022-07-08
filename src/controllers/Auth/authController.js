@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import { v4 as uuid } from 'uuid';
 import db, { connectClient, closeClient } from '../../databases/mongo.js';
 
 export async function createUser(request, response) {
@@ -33,6 +34,44 @@ export async function createUser(request, response) {
   } catch {
     //
     response.status(500).send('Erro ao adicionar no banco');
+    closeClient();
+  }
+}
+
+export async function loginUser(request, response) {
+  const { email, password } = request.body;
+
+  try {
+    connectClient();
+    const user = await db.collection('users').findOne({ email });
+    const { user_Id } = user;
+
+    const decrypted = bcrypt.compare(password, user.password);
+
+    if (!user || !decrypted) {
+      closeClient();
+      return response.status(401).send('Email ou Senha incorretos(s)!');
+    }
+
+    const token = uuid();
+
+    await db.collection('sessions').insertOne({
+      token,
+      user_Id
+    });
+
+    response.status(200).send({
+      headers: {
+        Authorization: 'Bearer ' + token
+      },
+      user: {
+        user_Id,
+        name: user.name
+      }
+    });
+    closeClient();
+  } catch {
+    response.status(500).send('Erro ao realizar login');
     closeClient();
   }
 }
