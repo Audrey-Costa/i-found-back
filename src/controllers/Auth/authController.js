@@ -75,3 +75,18 @@ export async function loginUser(request, response) {
     closeClient();
   }
 }
+
+export async function checkoutUser(request, response) {
+  try {
+    connectClient();
+    const session = response.locals.session;
+
+    await db.collection('sessions').deleteOne({ user_Id: session.user_Id });
+    response.sendStatus(200);
+
+    closeClient();
+  } catch {
+    closeClient();
+    response.status(500).send('Erro ao fazer checkout');
+  }
+}
