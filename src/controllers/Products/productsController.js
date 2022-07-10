@@ -78,10 +78,18 @@ export async function getCategories(request, response) {
 
     if (!categories) return response.status(404).send('Nenhuma categoria cadastrada.');
 
-    const categoriesList = categories.map(category => category.category);
+    let categoriesWithFormated = [];
+    for (let i = 0; i < categories.length; i++) {
+      const category = categories[i].category;
+
+      categoriesWithFormated.push({
+        title: category[0].toUpperCase() + category.substring(1),
+        category: category
+      });
+    }
 
     closeClient();
-    response.status(200).send(categoriesList);
+    response.status(200).send(categoriesWithFormated);
   } catch {
     closeClient();
     response.status(500).send('Erro ao pegar categorias.');
