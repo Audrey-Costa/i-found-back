@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  getCategories,
   getProducts,
   registerProduct
 } from '../controllers/Products/productsController.js';
@@ -11,4 +12,6 @@ const router = Router();
 router.post('/register-product', validateRegisterProduct, authUser, registerProduct);
 
 router.get('/products', getProducts);
+
+router.get('/categories', getCategories);
 export default router;
