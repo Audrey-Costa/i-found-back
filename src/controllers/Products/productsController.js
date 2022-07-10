@@ -2,17 +2,12 @@ import dayjs from 'dayjs';
 import db, { connectClient, closeClient } from '../../databases/mongo.js';
 
 export async function registerProduct(request, response) {
-  const { name, category, price, amount, discount } = request.body;
+  const { name, category, price, amount, discount, image } = request.body;
 
   const session = response.locals.session;
 
   try {
     connectClient();
-
-    const categoryRegistered = await db.collection('categories').findOne({ category });
-    if (!categoryRegistered) {
-      await db.collection('categories').insertOne({ category });
-    }
 
     await db.collection('products').insertOne({
       user_Id: session.user_Id,
@@ -21,6 +16,7 @@ export async function registerProduct(request, response) {
       price: Number(price),
       amount: Number(amount),
       discount: Number(discount),
+      image,
       time: dayjs().format('HH:mm:ss')
     });
 
@@ -45,15 +41,25 @@ export async function getProducts(request, response) {
     } else if (!categories) {
       response.status(404).send('Nenhuma categoria cadastrada.');
     }
-    const categoriesList = categories.map(category => category.category);
-    let arrProductsToFront = [];
+
+    let categoriesWithTitle = [];
+    for (let i = 0; i < categories.length; i++) {
+      const category = categories[i].category;
+
+      categoriesWithTitle.push({
+        title: category[0].toUpperCase() + category.substring(1),
+        category: category
+      });
+    }
+    //======================================================================
+    let productsList = [];
     for (let i = 0; i < products.length; i++) {
       const numberWithDiscount = (
         products[i].price -
         products[i].price * (products[i].discount * 0.01)
       ).toFixed(2);
 
-      arrProductsToFront.push({
+      productsList.push({
         name: products[i].name,
         category: products[i].category,
         price: products[i].price,
@@ -63,7 +69,7 @@ export async function getProducts(request, response) {
       });
     }
     closeClient();
-    response.status(200).send({ categories: categoriesList, arrProductsToFront });
+    response.status(200).send({ categoriesWithTitle, productsList });
   } catch {
     closeClient();
     response.status(500).send('Erro ao pegar produtos.');
@@ -78,21 +84,38 @@ export async function getCategories(request, response) {
 
     if (!categories) return response.status(404).send('Nenhuma categoria cadastrada.');
 
-    let categoriesWithFormated = [];
+    let categoriesWithTitle = [];
     for (let i = 0; i < categories.length; i++) {
       const category = categories[i].category;
 
-      categoriesWithFormated.push({
+      categoriesWithTitle.push({
         title: category[0].toUpperCase() + category.substring(1),
         category: category
       });
     }
 
     closeClient();
-    response.status(200).send(categoriesWithFormated);
+    response.status(200).send(categoriesWithTitle);
   } catch {
     closeClient();
     response.status(500).send('Erro ao pegar categorias.');
+  }
+}
+
+export async function getProductsForCategory(request, response) {
+  const { category } = request.params;
+  try {
+    connectClient();
+
+    const productsList = await db.collection('products').find({ category }).toArray();
+
+    const productsNameList = productsList.map(product => product.name);
+
+    closeClient();
+    response.status(200).send(productsNameList);
+  } catch {
+    closeClient();
+    response.status(500).send('Erro ao pegar produtos.');
   }
 }
 

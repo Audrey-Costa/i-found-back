@@ -5,7 +5,8 @@ const registerProductSchema = joi.object({
   name: joi.string().required(),
   amount: joi.string().required(),
   price: joi.string().required(),
-  discount: joi.string().required()
+  discount: joi.string().required(),
+  image: joi.string().required()
 });
 
 export default registerProductSchema;
