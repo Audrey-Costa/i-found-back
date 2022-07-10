@@ -37,9 +37,16 @@ export async function getProducts(request, response) {
     connectClient();
 
     const products = await db.collection('products').find().toArray();
-
+    const categories = await db.collection('categories').find().toArray();
+    if (!products && !categories) {
+      return response.status(404).send('Nenhum produto ou categoria cadastrada.');
+    } else if (!products) {
+      response.status(404).send('Nenhum produto cadastrado.');
+    } else if (!categories) {
+      response.status(404).send('Nenhuma categoria cadastrada.');
+    }
+    const categoriesList = categories.map(category => category.category);
     let arrProductsToFront = [];
-
     for (let i = 0; i < products.length; i++) {
       const numberWithDiscount = (
         products[i].price -
@@ -56,10 +63,28 @@ export async function getProducts(request, response) {
       });
     }
     closeClient();
-    response.status(200).send(arrProductsToFront);
+    response.status(200).send({ categories: categoriesList, arrProductsToFront });
   } catch {
     closeClient();
     response.status(500).send('Erro ao pegar produtos.');
+  }
+}
+
+export async function getCategories(request, response) {
+  try {
+    connectClient();
+
+    const categories = await db.collection('categories').find().toArray();
+
+    if (!categories) return response.status(404).send('Nenhuma categoria cadastrada.');
+
+    const categoriesList = categories.map(category => category.category);
+
+    closeClient();
+    response.status(200).send(categoriesList);
+  } catch {
+    closeClient();
+    response.status(500).send('Erro ao pegar categorias.');
   }
 }
 
